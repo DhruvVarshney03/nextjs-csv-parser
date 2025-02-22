@@ -1,7 +1,7 @@
 import multer from "multer";
 import path from "path";
 import fs from "fs";
-import csv from "csv-parser";
+import { fileQueue } from "../../jobs/queue"; // ✅ Import Bull queue
 
 // Ensure the "uploads" directory exists
 const uploadDir = path.join(process.cwd(), "uploads");
@@ -15,22 +15,6 @@ const upload = multer({ dest: uploadDir });
 // Disable Next.js's default body parser
 export const config = {
   api: { bodyParser: false },
-};
-
-// CSV Parsing Function
-const parseCSV = (filePath) => {
-  return new Promise((resolve, reject) => {
-    const results = [];
-    fs.createReadStream(filePath)
-      .pipe(csv())
-      .on("data", (data) => {
-        if (data.name && data.email) {
-          results.push(data);
-        }
-      })
-      .on("end", () => resolve(results))
-      .on("error", (error) => reject(error));
-  });
 };
 
 // File upload handler
@@ -47,12 +31,15 @@ export default async function handler(req, res) {
       }
 
       const filePath = req.file.path;
+
       try {
-        const parsedData = await parseCSV(filePath);
-        res.status(200).json({ message: "File uploaded and parsed", data: parsedData });
+        // ✅ Add job to the queue for background processing
+        await fileQueue.add({ filePath });
+
+        res.status(200).json({ message: "File uploaded and added to processing queue" });
         resolve();
       } catch (error) {
-        res.status(500).json({ message: "CSV parsing failed", error: error.message });
+        res.status(500).json({ message: "Queue job failed", error: error.message });
         reject(error);
       }
     });
