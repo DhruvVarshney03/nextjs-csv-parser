@@ -1,36 +1,103 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# CSV File Upload and Background Processing in Next.js
 
-## Getting Started
+## Overview
+This project enables users to upload CSV files containing user data. The uploaded files are processed in the background using a job queue, and the extracted data is sent to an external API for further handling. The entire system is containerized using Docker, making it easy to deploy and manage.
 
-First, run the development server:
+## Features
+- File upload functionality using Next.js API routes
+- CSV parsing and data validation
+- Background job processing with Redis and Bull
+- External API integration to handle user data
+- Docker-based setup for seamless deployment
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## Project Structure
+```
+nextjs-csv-processing/
+│── api/
+│   ├── Dockerfile
+│   ├── package.json
+│   ├── package-lock.json
+│   └── server.js
+│
+│── app/
+│   ├── favicon.ico
+│   ├── globals.css
+│   ├── layout.tsx
+│   └── page.tsx
+│
+│── jobs/
+│   ├── queue.js
+│   └── worker.js
+│
+│── pages/api/
+│   └── upload.js
+│
+│── uploads/
+│   └── sample.csv
+│
+│── .dockerignore
+│── .gitignore
+│── docker-compose.yml
+│── Dockerfile
+│── next.config.ts
+│── next-env.d.ts
+│── package.json
+│── package-lock.json
+│── README.md
+│── tailwind.config.ts
+│── postcss.config.mjs
+│── eslint.config.mjs
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Dependencies
+- **Next.js** (Frontend and API routes)
+- **Express.js** (For external API handling)
+- **Multer** (File upload handling)
+- **csv-parser** (CSV parsing)
+- **Bull** (Queue management using Redis)
+- **Redis** (Used as a job queue backend)
+- **Axios** (For API requests)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Setting Up Redis with Docker
+Redis is required for managing job queues. To run Redis using Docker, use the following command:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+docker run --name redis-server -d -p 6379:6379 redis
+```
 
-## Learn More
+Alternatively, since Redis is already included in the `docker-compose.yml`, you can start all services, including Redis, by running:
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+docker-compose up --build
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Setup Instructions
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/your-repo/nextjs-csv-processing.git
+   cd nextjs-csv-processing
+   ```
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Start the project using Docker:
+   ```bash
+   docker-compose up --build
+   ```
+4. Upload a CSV file via the frontend and monitor the logs to see job processing in action.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Screenshots
+![Building the Docker](image.png)
+![Starting the Docker](image-1.png)
+![Running on Docker Desktop](image-2.png)
+![Frontend UI](image-3.png)
+![Logs of Worker](image-4.png)
+![Logs of External API](image-5.png)
 
-## Deploy on Vercel
+## Demo Video
+[Video Link](https://drive.google.com/file/d/1TJk3f3PCsHpgDcW_147nWwN1cJNRZzbd/view?usp=sharing)
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Conclusion
+This project demonstrates how to handle file uploads, process CSV data asynchronously, and interact with external APIs using a background job system in a Dockerized Next.js environment.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.

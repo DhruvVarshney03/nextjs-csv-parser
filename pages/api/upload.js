@@ -9,8 +9,31 @@ if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
 
+// Function to generate a unique file name
+const getUniqueFileName = (originalName) => {
+  let fileName = path.parse(originalName).name;
+  let ext = path.extname(originalName);
+  let newFileName = `${fileName}${ext}`;
+  let counter = 1;
+
+  while (fs.existsSync(path.join(uploadDir, newFileName))) {
+    newFileName = `${fileName}_${counter}${ext}`;
+    counter++;
+  }
+
+  return newFileName;
+};
+
 // Configure Multer storage
-const upload = multer({ dest: uploadDir });
+const storage = multer.diskStorage({
+  destination: uploadDir,
+  filename: (req, file, cb) => {
+    const uniqueName = getUniqueFileName(file.originalname);
+    cb(null, uniqueName);
+  },
+});
+
+const upload = multer({ storage });
 
 // Disable Next.js's default body parser
 export const config = {
@@ -30,13 +53,13 @@ export default async function handler(req, res) {
         return reject(err);
       }
 
-      const filePath = req.file.path;
+      const filePath = path.join(uploadDir, req.file.filename);
 
       try {
         // ✅ Add job to the queue for background processing
         await fileQueue.add({ filePath });
 
-        res.status(200).json({ message: "File uploaded and added to processing queue" });
+        res.status(200).json({ message: "File uploaded and added to processing queue", filename: req.file.filename });
         resolve();
       } catch (error) {
         res.status(500).json({ message: "Queue job failed", error: error.message });

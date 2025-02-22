@@ -12,21 +12,40 @@ fileQueue.process(async (job) => {
   }
 
   const results = [];
+  const requiredFields = ["name", "email"]; // Define required columns
 
   fs.createReadStream(filePath)
     .pipe(csvParser())
     .on("data", (row) => {
-      if (row.name && row.email) {
-        results.push(row);
+      // Validate that required fields exist and are not empty
+      const missingFields = requiredFields.filter(field => !row[field] || row[field].trim() === "");
+      
+      if (missingFields.length > 0) {
+        console.error(`❌ Skipping row due to missing fields: ${missingFields.join(", ")}`, row);
+        return; // Skip this row
       }
+
+      // Validate email format using regex
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(row.email)) {
+        console.error(`❌ Invalid email format: ${row.email}`, row);
+        return;
+      }
+
+      results.push(row);
     })
     .on("end", async () => {
-      for (const user of results) {
+      if (results.length === 0) {
+        console.log("⚠️ No valid records found.");
+        return;
+      }
+
+      for (const record of results) {
         try {
-          await axios.post("http://external-api:5000/users", user);
-          console.log(`✅ User added: ${user.email}`);
+          await axios.post("http://external-api:5000/users", record);
+          console.log(`✅ Record sent:`, record);
         } catch (error) {
-          console.error(`❌ Error adding user ${user.email}:`, error.message);
+          console.error(`❌ Error sending record:`, error.message);
         }
       }
     });
